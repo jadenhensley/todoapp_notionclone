@@ -1,0 +1,20 @@
+{
+    "colors": {
+    "background": "#282a36",
+    "dracula": "#282a36",
+
+    "boxcolor": "#161618",
+    "darkmode": "#161618",
+
+    "primarycolor": "#0cbb7b",
+    "neogreen": "#0cbb7b",
+
+    "subcolor": "#FFFFFF",
+    "tealblue": "#21e6c1",
+
+    "quotebackground": "#E6DDC6",
+    "quoteforeground": "#4C4C6D",
+
+    "headings": "#FFFFFF"
+}
+}
