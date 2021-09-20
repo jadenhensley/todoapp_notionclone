@@ -94,6 +94,11 @@ class ProjectList():
                 elif project.checked == 1:
                     project.checked = 0
 
+    def change_deadline(self, project_id, deadline):
+        for project in self.projectlist:
+            if str(project.project_id) == str(project_id):
+                project.deadline = deadline
+
     def remove_project(self, project_id):
         # del self.todolist[task]
         for project in self.projectlist:
@@ -145,6 +150,12 @@ def check_uncheck_project(project_id):
     projects = ProjectList()
     projects.load_data()
     projects.check_project(project_id)
+    projects.save_data()
+
+def change_project_deadline(project_id, deadline):
+    projects = ProjectList()
+    projects.load_data()
+    projects.change_deadline(project_id, deadline)
     projects.save_data()
 
 def save_projects_data(outputfile="projectslist_backup"):

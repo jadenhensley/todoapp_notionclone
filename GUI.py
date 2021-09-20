@@ -212,6 +212,9 @@ def gui_taskview_window():
     t_buttonsbar = Frame(sidebar, width=200, height=300, bg=colors["boxcolor"], relief='flat', borderwidth=0)
     t_buttonsbar.pack(expand=False, fill='both', side=BOTTOM, anchor='nw')
 
+    p_entrybox = Entry(p_buttonsbar, width = 45)
+    p_entrybox.pack(anchor="w")
+
     
     p_add_btn = Image.open("media/addprojectbutton.png")
     p_add_btn = p_add_btn.resize((100, 50), Image.BILINEAR)
@@ -234,6 +237,8 @@ def gui_taskview_window():
 
     p_listbox.pack()
 
+    t_entrybox = Entry(t_buttonsbar, width = 45)
+    t_entrybox.pack(anchor="w")
     
     t_add_btn = Image.open("media/additembutton.png")
     t_add_btn = t_add_btn.resize((100, 50), Image.BILINEAR)
@@ -258,7 +263,7 @@ def gui_taskview_window():
 
     t_listbox.pack()
 
-    display_in_real_time(timelabel)
+    # display_in_real_time(timelabel)
 
     # default window size
     root.geometry("1536x900")
@@ -276,7 +281,6 @@ def gui_taskview_window():
 # idea: dont provide listbox as argument, simply have add_task and add_project as separate button commands for each respective list
 
 def gui_add_task():
-    display_in_real_time(timelabel)
     print("add button clicked")
     lists.add_task("dummy task")
     update_listboxes_data()
@@ -310,7 +314,7 @@ def gui_remove_project():
     try:
         project_index = p_listbox.curselection()[0] 
         p_listbox.delete(project_index)
-        projects.remove_task(p_id_array[project_index])
+        projects.remove_project(p_id_array[project_index])
         update_listboxes_data()
     except IndexError:
         print("index error wtf")

@@ -1,6 +1,6 @@
 {
     "weatherdata": {
-    "cityid": "provide your own cityid",
-    "api_key": "provide your own apikey"            
+    "cityid": "",
+    "api_key": ""            
     }
 }

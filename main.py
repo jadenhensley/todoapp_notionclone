@@ -230,6 +230,11 @@ def main(argv):
         elif argv[0] == "gui":
             GUI.gui_taskview_window()
 
+        elif argv[0] == "deadlines":
+            tempidarray = projects.get_projects_ids()
+            for id in tempidarray:
+                projects.change_project_deadline(id, "10/30/2021")
+
 
 
         else:
