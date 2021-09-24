@@ -17,12 +17,15 @@ from formats import u_checkbox_empty, u_checkbox_full
 
 # note: we inherit from Task and import from lists, but I do not see any real need for this, its safer to keep it separate.
 class Project(Task):
-    def __init__(self, name, deadline, checked=0):
+    def __init__(self, name, deadline, checked=0, category="not specified", important=0, urgent=0, difficulty=0, id=randint(0,9999)):
         self.name = name
         self.deadline = deadline
         self.checked = checked
+        self.category = category
+        self.important = important
+        self.urgent = urgent
+        self.difficulty = difficulty
 
-        id = randint(0, 9999)
         self.project_id = id
     
     def needsCompleted(self):
@@ -30,6 +33,9 @@ class Project(Task):
             return u_checkbox_empty
         else:
             return u_checkbox_full
+    
+    def __str__(self):
+        return f"{self.name}, {self.deadline}, {self.checked}, {self.category}, {self.important}, {self.urgent}, {self.difficulty}, {self.project_id}"
 
 # alongside our projects having deadlines, we
 #  need to have desktop push notifications and google calendar scheduling that updates
@@ -182,5 +188,22 @@ def get_projects_ids():
         id_array.append(project.project_id)
     return id_array
 
+def main():
+    projects = ProjectList()
+    # projects.load_data()
+    projects.push_project("new project object")
+    print(projects.projectlist[0])
+    # bug: since we are loading previously-defined objects, they do not update alongside our class
+    # when it updates. more reasons we have to refactor code.
+    
+    # plan on doing: for project in project list: dump to CSV.
+    # after this, will reimplement our Projects and Task classes to work with
+    # new features to be implemented.
+    # then we will import said data from CSV's, associating each CSV file
+    # with a different category, to import under one large table, with different categories
+    # that can be sorted from.
+    # I may consider using SQLite for this but I don't know how to use it.
+
 if __name__ == "__main__":
     show_projects()
+    # main()
