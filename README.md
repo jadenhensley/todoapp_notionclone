@@ -1,5 +1,5 @@
 # Screenshot
-<img src="https://github.com/jadenhensley/notionclone/blob/main/media/screenshot.png">
+<img src="https://github.com/jadenhensley/notionclone/blob/main/media/screenshot3.png">
 
 # What is it?
 Notion-like app with terminal commands input, designed towards daily productivity and one simple interface for logging data, or taking notes, as I go aobut my life or work on other coding projects.
