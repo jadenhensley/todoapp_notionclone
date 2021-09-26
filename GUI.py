@@ -1,337 +1,554 @@
+# TEMPLATE CLASS FOR GUI APP
 # for GUI
 import tkinter as tk
 from tkinter import *
 # for images
 from PIL import ImageTk, Image
-# import our lists modules to be read
-import projects, lists
+from datetime import datetime
+
+# # import our lists modules to be read
+# import projects, lists
 # for weather, time
 import weather
-# lets randomize our banner on startup :)
+# # lets randomize our banner on startup :)
 from random import randint
-# for saving / loading in data
-import pickle
-# allows us to load in theme preferences from config/theme.json
+# # for saving / loading in data
+# import pickle
+# # allows us to load in theme preferences from config/theme.json
 import theme
-# allows us to display inspiring quotes
+# # allows us to display inspiring quotes
 import quotes
-# for manipulating gui in real time (important for our use case)
-import time
+# # for manipulating gui in real time (important for our use case)
+from time import strftime
+# projects
+import projects
+# tasks
+import tasks
 
 # plan on allowing user to provide wallpaper, for now this just works.
-banners = ["media/banner/woodcuts_1.jpg","media/banner/woodcuts_2.jpg","media/banner/woodcuts_3.jpg","media/banner/woodcuts_4.jpg", "media/banner/nasa_the_blue_marble.jpg"]
+# banners = ["media/banner/woodcuts_1.jpg","media/banner/woodcuts_2.jpg","media/banner/woodcuts_3.jpg","media/banner/woodcuts_4.jpg", "media/banner/nasa_the_blue_marble.jpg"]
+banners = [
+"media/banner/0040.jpg",
+"media/banner/0065.jpg",
+"media/banner/0092.jpg",
+"media/banner/0137.jpg",
+"media/banner/0171.jpg",
+"media/banner/0173.jpg",
+"media/banner/0231.jpg",
+"media/banner/0256.jpg",
+"media/banner/0258.jpg",
+"media/banner/0261.jpg",
+"media/banner/0302.jpg",
+"media/banner/woodcuts_1.jpg",
+"media/banner/woodcuts_2.jpg",
+"media/banner/woodcuts_3.jpg",
+"media/banner/woodcuts_4.jpg",
+"media/banner/nasa_the_blue_marble.jpg"
+]
+
+
+
+projects_category = "all"
+tasks_category = "all"
+
+
+def set_projects_category(input):
+    projects_category = input
+
+def set_tasks_category(input):
+    tasks_category = input
+
+projects_array = []
+tasks_array = []
+
+if projects_category != "all":
+    for project in projects.get_projects(projects_category):
+        projects_array.append(project[0])
+else:
+    for project in projects.get_all_projects():
+        projects_array.append(project[0])
+
+if tasks_category != "all":
+    for task in tasks.get_tasks(tasks_category):
+        tasks_array.append(task[0])
+else:
+    for task in tasks.get_all_tasks():
+        tasks_array.append(task[0])
+
+u_circle =  "\u25CF"
+
+# time_text = weather.getLocalTime()
+# weather_text = weather.getLocalWeather()
+# weekday_text = weather.getWeekDay()
+
+
+
+
+
 selected_art = banners[randint(0, len(banners)-1)]
 
 # load in the user's name, to display a friendly message in sidebar
 
-count = 0
-
-
-username = ""
-try:
-    loadinstorage = open("config/username.pickle", "rb")
-    username = pickle.load(loadinstorage)
-    print(username)
-    loadinstorage.close()
-except:
-    print('could not load username')
-
-
-# our actual functions need to be defined after
-# the gui_window() in order for it to be called first,
-# yet our gui_window() must also be able to see
-# our functions above the file so that they can be called and "exist".
-# Right now my brain is dead, so this is the solution
-# I came up with.
-
-def goto_add_task():
-    gui_add_task()
-
-def goto_check_task():
-    gui_check_task()
-
-def goto_remove_task():
-    gui_remove_task()
-
-def goto_add_project():
-    gui_add_project()
-
-def goto_check_project():
-    gui_check_project()
-
-def goto_remove_project():
-    gui_remove_project()
-
-def launch_notes_view():
-    pass
-
-def launch_todo_view():
-    pass
-
-
-
-
-# colors = {"darkblue": "#071e3d",
-            #   "background": "#212121",
-            #   "neogreen": "#0cbb7b",
-            #   "darkmode": "#161618",
-            #   "cyanblue": "#278EA5",
-            #   "tealblue": "#21e6c1",
-            #   "white": "#FFFFFF",
-            #   "dracula": "#282a36"}
-
+# get theme
 colors = theme.getThemeConfig()
-print(colors)
 
+# button size i.e. FONT size (important to change depending upon your screen's resolution)
+
+# for smaller screens (720pish)
+# buttonfont = "consolas 14 bold"
+
+# for larger screens (1080pish)
+buttonfont = "consolas 20 bold"
+
+
+
+# initialize Tk root
 root = Tk()
 
-# listbox for projects
-p_listbox = Listbox(root, fg=colors["subcolor"], bg=colors["boxcolor"],
-highlightcolor=colors["headings"], font=("Arial",21), width = 80)
-# listbox for tasks
-t_listbox = Listbox(root, fg=colors["subcolor"], bg=colors["boxcolor"], 
-highlightcolor=colors["headings"], font=("Arial", 21), width = 80)
 
-p_array = projects.get_projects_data()
-p_id_array = projects.get_projects_ids()
-t_array = lists.get_todolist_data()
-t_id_array = lists.get_todolist_ids()
+# root.resizable(width=False, height=False)
 
-def update_listboxes_data():
-    # needs to be called on each button press whether we check the boxes or remove them
-    global p_array; global t_array; global p_id_array; global t_id_array
-    p_array = []
-    p_id_array = []
-    t_array = []
-    t_id_array = []
+# for smaller screens (720p) where font should also be set smaller
+# root.minsize(width=800, height=700)
 
-    p_array = projects.get_projects_data()
-    p_id_array = projects.get_projects_ids()
-    t_array= lists.get_todolist_data()
-    t_id_array = lists.get_todolist_ids()
+# for larger screens (1080p) where font is naturally larger
+root.minsize(width=1000, height=950)
 
+fullscreenstate = False
 
-    p_listbox.delete(0,'end')
-    for count, item in enumerate(p_array):
-        p_listbox.insert(count+1, f"{item.needsCompleted()} {item.name} | deadline:{item.deadline}")
-    t_listbox.delete(0,'end')
-    for count, item in enumerate(t_array):
-        t_listbox.insert(count+1, f"{item.needsCompleted()} {item.name}")
-
-update_listboxes_data()
-
-def gui_taskview_window():
-    print(p_id_array)
-    print(t_id_array)
-
-    time_text = weather.getLocalTime()
-    weather_text = weather.getLocalWeather()
-    weekday_text = weather.getWeekDay()
-
-
-    sidebar = Frame(root, width=140, height=500, bg=colors["primarycolor"], relief='sunken', borderwidth = 2)
-
-    sidebar.pack(expand=False, fill='both', side=LEFT, anchor='nw')
-
-
-    menubar = Frame(sidebar, width=300, height=300, bg=colors["boxcolor"], relief='sunken', borderwidth=0)
-    menubar.pack(expand=False, fill='none', side=TOP, anchor='nw')
+def resize(event):
+    global fullscreenstate
+    fullscreenstate = not fullscreenstate
+    root.attributes("-fullscreen", fullscreenstate)
+    return "break"
 
 
 
-    iconimage = Image.open("media/icon2.png")
-    iconimage = iconimage.resize((140, 100), Image.NEAREST)
+# def replace_quote():
+#     quoteoftheday.place(x=100,y=100)
 
-    logo = ImageTk.PhotoImage(iconimage)
-    logolabel = Label(menubar, image = logo, bg=colors["boxcolor"], anchor="w")
-    logolabel.place(x=0, y=0)
-    logolabel.pack(side=LEFT)
-
-    logotext = Label(menubar, text="neoNotes", font=("Roboto", 24, "bold"), bg=colors["boxcolor"], fg=colors["headings"], width=20, anchor="w")
-    logotext.pack()
-
-    viewlabel = Label(menubar, text="Tasks View", font=("Roboto", 24, "bold"), bg=colors["boxcolor"], fg=colors["headings"], width=20)
-    viewlabel.pack()
+root.bind("<F11>", resize); root.bind("<f>", resize)
+root.bind("<Control-q>",exit); root.bind("<Control-w>",exit)
 
 
+def time(label):
+    string = strftime('%H:%M:%S %p')
+    label.config(text=string)
+    label.after(1000, time)
 
 
+quotes_x = 50
 
-    
-
-    if weather.TimeOfDay() == 0:
-        hellotext=f"Good Morning, {username}."
-    elif weather.TimeOfDay() == 1:
-        hellotext=f"Hello, {username}."
-    elif weather.TimeOfDay() == 2:
-        hellotext=f"Good Night, {username}."
-    
-    hellolabel = Label(sidebar, text=hellotext, font=("Roboto", 24, "bold"), bg=colors["primarycolor"], fg=colors["boxcolor"], width=20)
-    hellolabel.pack()
-
-    subtext = Label(sidebar, text="It is currently...", font=("Roboto", 18), bg=colors["primarycolor"], fg=colors["boxcolor"], width=20)
-    subtext.pack()
-    # spacer = Label(sidebar, text=f"\n____________________\n", font=("Roboto", 20, "bold"), bg=colors["primarycolor"], fg=colors["darkmode"], width=20)
-    # spacer.pack()
-    timelabel = Label(sidebar, text=f"{time_text}\n____________________", font=("Roboto", 20, "bold"), bg=colors["primarycolor"], fg=colors["boxcolor"], width=20)
-    timelabel.pack()
-    weatherlabel = Label(sidebar, text=f"{weather_text}\n____________________", font=("Roboto", 20, "bold"), bg=colors["primarycolor"], fg=colors["boxcolor"], width=20)
-    weatherlabel.pack()
-    weekdaylabel = Label(sidebar, text=f"{weekday_text}\n____________________", font=("Roboto", 20, "bold"), bg=colors["primarycolor"], fg=colors["boxcolor"], width=20)
-    weekdaylabel.pack()
-
-
-    bannerimage = Image.open(selected_art)
-    bannerimage = bannerimage.resize((int(root.winfo_screenwidth()), int(root.winfo_screenheight() * .25)), Image.BILINEAR)
-
-    photo = ImageTk.PhotoImage(bannerimage)
-    bannerlabel = Label(root, image = photo, bg=colors["background"])
-    bannerlabel.pack(fill=BOTH, expand=YES)
-
+def tasks_view(master=root):
+    clear_frame()
+    menubar = TemplateMenubar(master, f"Tasks View (category: {tasks_category} )")
     quoteoftheday = Label(root, text=f"{quotes.getDailyQuote()}", font=("Roboto", 12, "bold"), bg=colors["quotebackground"], fg=colors["quoteforeground"], borderwidth=2, relief="solid")
-    quoteoftheday.place(x=700, y=100)
+    quoteoftheday.place(x=quotes_x, y=100)
+    sidebar = TemplateSidebar(master)
+    t_listbox = Listbox(master, fg=colors["tealblue"], bg=colors["boxcolor"],
+    highlightcolor=colors["headings"], font="consolas 18", width = 80,
+    borderwidth=1, relief="groove")
+
+    for count, task in enumerate(tasks_array):
+        t_listbox.insert(count+1, f"{u_circle} {task}")
+        t_listbox.pack(side=TOP, fill=BOTH)
 
 
-    root.title('Notes GUI')
-    root.iconbitmap('media/icon2.ico')
-    root.configure(background=colors["background"])
 
-    p_label = Label(root, text="Projects to do", font=("Roboto", 28), bg=colors["background"], fg=colors["headings"])
-    p_label.pack()
+    # showtime = TimeWidgets(master)
+    # showtime.update_clock()
 
-    # our buttons sidebar
+def projects_view(master=root):
+    clear_frame()
+    menubar = TemplateMenubar(master, f"Projects View (category: {projects_category} )")
+    quoteoftheday = Label(root, text=f"{quotes.getDailyQuote()}", font=("Roboto", 12, "bold"), bg=colors["quotebackground"], fg=colors["quoteforeground"], borderwidth=2, relief="solid")
+    quoteoftheday.place(x=quotes_x, y=100)
+    sidebar = TemplateSidebar(master)
+    t_listbox = Listbox(master, fg=colors["tealblue"], bg=colors["boxcolor"],
+    highlightcolor=colors["headings"], font="consolas 18", width = 80,
+    height=400, borderwidth=1, relief="groove")
+
+    for count, project in enumerate(projects_array):
+        pname = f"{u_circle} {project}"
+        t_listbox.insert(count+1, pname)
+        t_listbox.pack(side=TOP, fill=BOTH)
+
+    # for project in projects_array:
+    #     x = Label(master, text=f"{u_circle} {project}",fg=colors["tealblue"], bg=colors["boxcolor"], font="consolas 18 bold", width=400, borderwidth=1, relief="groove", anchor="w")
+    #     x.pack(side=TOP, fill=BOTH)
+
+def habits_view(master=root):
+    clear_frame()
+    menubar = TemplateMenubar(master, "Habits View")
+    quoteoftheday = Label(root, text=f"{quotes.getDailyQuote()}", font=("Roboto", 12, "bold"), bg=colors["quotebackground"], fg=colors["quoteforeground"], borderwidth=2, relief="solid")
+    quoteoftheday.place(x=quotes_x, y=100)
+    sidebar = TemplateSidebar(master)
+
+def logging_view(master=root):
+    clear_frame()
+    menubar = TemplateMenubar(master, "Log")
+    quoteoftheday = Label(root, text=f"{quotes.getDailyQuote()}", font=("Roboto", 12, "bold"), bg=colors["quotebackground"], fg=colors["quoteforeground"], borderwidth=2, relief="solid")
+    quoteoftheday.place(x=quotes_x, y=100)
+    sidebar = TemplateSidebar(master)
+
+def graphing_view(master=root):
+    clear_frame()
+    menubar = TemplateMenubar(master, "Data Visualization")
+    quoteoftheday = Label(root, text=f"{quotes.getDailyQuote()}", font=("Roboto", 12, "bold"), bg=colors["quotebackground"], fg=colors["quoteforeground"], borderwidth=2, relief="solid")
+    quoteoftheday.place(x=quotes_x, y=100)
+    sidebar = TemplateSidebar(master)
+    
+    logviewButton = Button(master,text="Log Hours",fg="white",
+    bg=colors["background"], font="consolas 15 bold",
+    command=totalhours_graph)
+    logviewButton.pack(side=TOP, expand=False, fill=BOTH)
+
+    totalhoursButton = Button(master, text="Graph total hours spent coding", fg="white",
+    bg=colors["background"], font="consolas 15 bold", command=totalhours_graph)
+    totalhoursButton.pack(side=TOP, expand=False, fill=BOTH)
+
+    habitsButton = Button(master, text="Graph this month's habit streak", fg="white",
+    bg=colors["background"], font="consolas 15 bold", command=totalhours_graph)
+    habitsButton.pack(side=TOP, expand=False, fill=BOTH)
+
+    moodButton = Button(master, text="Graph my daily mood", fg="white",
+    bg=colors["background"], font="consolas 15 bold", command=totalhours_graph)
+    moodButton.pack(side=TOP, expand=False, fill=BOTH)
+
+    dailyproductivityButton = Button(master, text="Graph my daily productivity", fg="white",
+    bg=colors["background"], font="consolas 15 bold", command=totalhours_graph)
+    dailyproductivityButton.pack(side=TOP, expand=False, fill=BOTH)
+
+    timelineButton = Button(master, text="Show Projects Timeline", fg="white",
+    bg=colors["background"], font="consolas 15 bold", command=totalhours_graph)
+    timelineButton.pack(side=BOTTOM, expand=True, fill=BOTH)
+
+
+def readinglist_view(master=root):
+    clear_frame()
+    menubar = TemplateMenubar(master, "Reading List")
+    sidebar = TemplateSidebar(master)
+
+
+def clear_frame(master=root):
+    for widgets in master.winfo_children():
+        widgets.destroy()
+    
+def totalhours_graph():
+    pass
+
+# not sure what this does
+# root.rowconfigure((0, 1, 2, 3), weight=1)
+
+
+
+
+    # if current_size < 2:
+    #     current_size += 1
+    # else:
+    #     current_size = 0
+
+    # sizes = ['1200x950', '800x900', '1280x1920']
+
+    # print(current_size)
+
+    # root.geometry(sizes[current_size])
+
+# load in image
+bannerimage = Image.open(selected_art)
+
+# not sure which image size I prefer
+
+# bannerimage = bannerimage.resize((int(root.winfo_screenwidth()*.8), int(root.winfo_screenheight()*.2)), Image.BILINEAR)
+bannerimage = bannerimage.resize((int(root.winfo_screenwidth()), int(root.winfo_screenheight()*.25)), Image.BILINEAR)
+
+photo = ImageTk.PhotoImage(bannerimage)
+
+class TimeWidgets():
+    def __init__(self, master):
+        self.label_date_now = Label(master, text="Current Date", bg="red", font = 'consolas 12 bold')
+        self.label_date_now.pack(side=TOP, expand=False)
+
+        self.label_time_now = Label(master, text="Current Time", bg="blue", font = 'consolas 12')
+        self.label_time_now.pack(side=TOP, expand=False)
+
+    def update_clock(self):
+        time_now = weather.getLocalTime()
+        weekday_now = weather.getWeekDay()
+        self.label_date_now.config(text = weekday_now)
+        self.label_date_now.after(500, self.update_clock)
+        self.label_time_now.config(text = time_now)
+        self.label_time_now.after(1000, self.update_clock)
+        # return formatted_now
+
+class TemplateWindow():
+    def __init__(self, root, title, geometry):
+        self.root = root
+        self.root.title(title)
+        self.root.geometry(geometry) # input, sizexsize
+        self.root.config(bg=colors["background"])
+
+        tasks_view(self.root)
+
+
+
+
+        # todo: figure out why our banner isn't loading
+
+        # menubar.forget()
+
+        
+
+        # menubar = TemplateMenubar(self.root, "Projects View")
+        # sidebar = TemplateSidebar(self.root)
+
+        self.root.mainloop()
+        # mainloop()
+
+
+
+
+
+        
+        
+
 
     
 
-    p_buttonsbar = Frame(sidebar, width=200, height=300, bg=colors["boxcolor"], relief='flat', borderwidth=0)
-    p_buttonsbar.pack(expand=False, fill='both', side=TOP, anchor='nw')
+class TemplateText(Label):
+    def __init__(self, master, text):
+        self.viewLabel = Label(master, text=text,fg="white",
+        bg=colors["boxcolor"], font=buttonfont,
+        borderwidth=2, relief="groove")
+        self.viewLabel.pack(side=TOP, expand=True, fill=BOTH)
 
-    spacerbar = Frame(sidebar, width=1, height=1000, bg=colors["primarycolor"], relief='flat', borderwidth=0)
-    spacerbar.pack(expand=False, fill='both', side=LEFT, anchor='nw')
 
-    t_buttonsbar = Frame(sidebar, width=200, height=300, bg=colors["boxcolor"], relief='flat', borderwidth=0)
-    t_buttonsbar.pack(expand=False, fill='both', side=BOTTOM, anchor='nw')
+class TemplateSidebar(Frame):
+    def __init__(self, master, bg=colors["boxcolor"], **kwargs):
+        super(TemplateSidebar,self).__init__(master, **kwargs)
 
-    p_entrybox = Entry(p_buttonsbar, width = 45)
-    p_entrybox.pack(anchor="w")
 
+        # self.master = master
+        self.config(bg = bg)
+        # sidebarContainer = Frame(master, width=140, height=10000, bg=bg, relief='sunken', borderwidth = 0)
+        
+        # Frame.__init__(self, master, width=140, height=100, bg=bg, relief='sunken', borderwidth = 0)
+        
+        # sidebar = Frame(master, width=140, height=10000, bg=colors["primarycolor"], relief='sunken', borderwidth = 0)
+        # sidebar.pack(expand=True, fill='y', side=LEFT, anchor='nw')
+
+
+        self.buttonframe = Frame(self)
+        self.buttonframe.config(bg = bg)
+        self.buttonframe.grid(row=0,column=0)
+
+        # button = MenuButton(self)
+
+        self.dataLabel = Label(self.buttonframe, text="Data",fg="white",
+        bg=colors["boxcolor"], font=buttonfont,
+        borderwidth=2, relief="groove")
+        self.dataLabel.pack(side=TOP, expand=True, fill=BOTH)
+
+        self.loadbutton = Button(self.buttonframe,text="load/import data",fg="white",
+        bg=colors["background"], font="consolas 10 bold", command="resize")
+        # self.loadbutton.bind("<Return>", resize)
+        self.loadbutton.pack(side=TOP, expand=True, fill=BOTH)
+
+        self.savebutton = Button(self.buttonframe,text="save/export data",fg="white",
+        bg=colors["background"], font="consolas 10 bold")
+        self.savebutton.pack(side=TOP, expand=True, fill=BOTH)
+
+
+        self.viewLabel = Label(self.buttonframe, text="Views",fg="white",
+        bg=colors["boxcolor"], font=buttonfont,
+        borderwidth=2, relief="groove")
+        self.viewLabel.pack(side=TOP, expand=True, fill=BOTH)
+
+        self.viewtasksButton = Button(self.buttonframe,text="Tasks",fg="white",
+        bg=colors["background"], font=buttonfont,
+        command=tasks_view)
+        self.viewtasksButton.pack(side=TOP, expand=True, fill=BOTH)
+
+
+        self.viewprojectsButton = Button(self.buttonframe,text="Projects",fg="white",
+        bg=colors["background"], font=buttonfont,
+        command=projects_view)
+        self.viewprojectsButton.pack(side=TOP, expand=True, fill=BOTH)
+
+
+        self.viewhabitsButton = Button(self.buttonframe,text="Habits",fg="white",
+        bg=colors["background"], font=buttonfont,
+        command=habits_view)
+        self.viewhabitsButton.pack(side=TOP, expand=True, fill=BOTH)
+
+        self.graphdataButton = Button(self.buttonframe,text="Graph of Data",fg="white",
+        bg=colors["background"], font=buttonfont,
+        command=graphing_view)
+        self.graphdataButton.pack(side=TOP, expand=True, fill=BOTH)
+
+        self.readinglistButton = Button(self.buttonframe,text="Reading List",fg="white",
+        bg=colors["background"], font=buttonfont,
+        command=readinglist_view)
+        self.readinglistButton.pack(side=TOP, expand=True, fill=BOTH)
+
+        self.dataLabel = Label(self.buttonframe, text="Items",fg="white",
+        bg=colors["boxcolor"], font=buttonfont,
+        borderwidth=2, relief="groove")
+        self.dataLabel.pack(side=TOP, expand=True, fill=BOTH)
+
+        self.additem = Button(self.buttonframe,text="add",fg="white",
+        bg=colors["primarycolor"],font=buttonfont,
+        command="exit")
+        self.additem.pack(side=LEFT, expand=False, fill='y')
+
+        self.checkitem = Button(self.buttonframe,text="check",fg="yellow",
+        bg=colors["primarycolor"],font=buttonfont,
+        command="exit")
+        self.checkitem.pack(side=LEFT, expand=False, fill='y')
+
+        self.removeitem = Button(self.buttonframe,text="remove",fg="white",
+        bg=colors["primarycolor"],font=buttonfont,
+        command="exit")
+        self.removeitem.pack(side=LEFT, expand=False, fill='y')
+
+
+
+
+
+
+
+        # button.pack()
+
+
+
+        Frame.pack(self, side=LEFT, expand=True, fill='y', anchor='nw')
+        # Frame.pack(self, master, expand=True, fill='y', side=LEFT, anchor='nw')
+
+
+
+        # buttonsContainer = Frame(master, bg="red", width=20, height=20, relief='sunken', borderwidth = 0)
+        
+        # sidebarContainer.pack(master, expand=True, fill='y', side=LEFT, anchor='nw')
+        # buttonsContainer.pack(self, expand=False)
     
-    p_add_btn = Image.open("media/addprojectbutton.png")
-    p_add_btn = p_add_btn.resize((100, 50), Image.BILINEAR)
-    p_formatted_add_btn = ImageTk.PhotoImage(p_add_btn)
-    p_additembutton = Button(p_buttonsbar, image=p_formatted_add_btn, command=goto_add_project, width=100, height=50, relief='flat', borderwidth=0)
-    p_additembutton.pack(side=LEFT)
-
-    p_check_btn = Image.open("media/checkprojectbutton.png")
-    p_check_btn = p_check_btn.resize((100, 50), Image.BILINEAR)
-    p_formatted_check_btn = ImageTk.PhotoImage(p_check_btn)
-    p_checkitembutton = Button(p_buttonsbar, image=p_formatted_check_btn, command=goto_check_project, width=100, height=50, border=0)
-    p_checkitembutton.pack(side=LEFT)
-
-    p_remove_btn = Image.open("media/removeprojectbutton.png")
-    p_remove_btn = p_remove_btn.resize((100, 50), Image.BILINEAR)
-    p_formatted_remove_btn = ImageTk.PhotoImage(p_remove_btn)
-    p_removeitembutton = Button(p_buttonsbar, image=p_formatted_remove_btn, command=goto_remove_project, width=100, height=50, border=0)
-    p_removeitembutton.pack(side=LEFT)
 
 
-    p_listbox.pack()
+class RedSidebar(TemplateSidebar):
+    def __init__(self, master):
+        TemplateSidebar.__init__(self, master, bg="red")
 
-    t_entrybox = Entry(t_buttonsbar, width = 45)
-    t_entrybox.pack(anchor="w")
+# TODO: figure out how to get this template class to have a "level" in the root's heirarchy, so that I can place
+# template items within template items, using classes
+
+
+class TemplateMenubar(Frame):
+    def __init__(self, master, current_view):
+        Frame.__init__(self, master, width=30000, height=150, bg=colors["boxcolor"], relief='sunken', borderwidth=0)
+
+        banner = TemplateBanner(self)
+
+        Frame.pack(self, expand=True, fill='x', side=TOP, anchor='nw')
+
+
+        # iconimage = Image.open("media/icon2.png")
+        # iconimage = iconimage.resize((140, 100), Image.NEAREST)
+
+        # logo = ImageTk.PhotoImage(iconimage)
+        # logolabel = Label(self, image = logo, bg=colors["boxcolor"], anchor="w")
+        # logolabel.place(x=0, y=0)
+        # logolabel.pack(side=LEFT)
+
+
+        # logotext = Label(self, text="Notion Clone", font=("Roboto", 24, "bold"), bg=colors["boxcolor"], fg=colors["headings"], width=20, anchor="w")
+        # logotext.pack()
+
+        viewlabel = Label(self, text=f"{current_view}", font=("Roboto", 24, "bold"), bg=colors["boxcolor"], fg=colors["headings"], width=50, anchor="w")
+        viewlabel.pack()
+
+        # banner =  TemplateBanner(self.master)
+
+class TemplateBanner():
+    def __init__(self, master):
+        bannerlabel = Label(master, image = photo, bg=colors["background"])
+        bannerlabel.pack(expand=True, fill="y")
+
+class MenuButton(Button):
+    def __init__(self, master):
+        Button.__init__(self, master, text="exit program", fg="red", bg=colors["background"], command="exit")
+        Frame.grid(self, row=0, column=0,pady=(10,0))
+        Button.pack(master)
+
+
+
+# class TemplateMenu:
+#     def __init__(self, root,)
+
+
+# # listbox for projects
+# p_listbox = Listbox(root, fg=colors["subcolor"], bg=colors["boxcolor"],
+# highlightcolor=colors["headings"], font=("Arial",21), width = 80)
+# # listbox for tasks
+# t_listbox = Listbox(root, fg=colors["subcolor"], bg=colors["boxcolor"], 
+# highlightcolor=colors["headings"], font=("Arial", 21), width = 80)
+
+
+# def gui_taskview_window():
+#     print(p_id_array)
+#     print(t_id_array)
+
+#     time_text = weather.getLocalTime()
+#     weather_text = weather.getLocalWeather()
+#     weekday_text = weather.getWeekDay()
+
+
+#     sidebar = Frame(root, width=140, height=500, bg=colors["primarycolor"], relief='sunken', borderwidth = 2)
+
+#     sidebar.pack(expand=False, fill='both', side=LEFT, anchor='nw')
+
+
+
+#     if weather.TimeOfDay() == 0:
+#         hellotext=f"Good Morning, {username}."
+#     elif weather.TimeOfDay() == 1:
+#         hellotext=f"Hello, {username}."
+#     elif weather.TimeOfDay() == 2:
+#         hellotext=f"Good Night, {username}."
     
-    t_add_btn = Image.open("media/additembutton.png")
-    t_add_btn = t_add_btn.resize((100, 50), Image.BILINEAR)
-    t_formatted_add_btn = ImageTk.PhotoImage(t_add_btn)
-    t_additembutton = Button(t_buttonsbar, image=t_formatted_add_btn, command=goto_add_task, width=100, height=50, border=0)
-    t_additembutton.pack(side=LEFT)
+#     hellolabel = Label(sidebar, text=hellotext, font=("Roboto", 24, "bold"), bg=colors["primarycolor"], fg=colors["boxcolor"], width=20)
+#     hellolabel.pack()
 
-    t_check_btn = Image.open("media/checkitembutton.png")
-    t_check_btn = t_check_btn.resize((100, 50), Image.BILINEAR)
-    t_formatted_check_btn = ImageTk.PhotoImage(t_check_btn)
-    t_checkitembutton = Button(t_buttonsbar, image=t_formatted_check_btn, command=goto_check_task, width=100, height=50, border=0)
-    t_checkitembutton.pack(side=LEFT)
+#     subtext = Label(sidebar, text="It is currently...", font=("Roboto", 18), bg=colors["primarycolor"], fg=colors["boxcolor"], width=20)
+#     subtext.pack()
+#     # spacer = Label(sidebar, text=f"\n____________________\n", font=("Roboto", 20, "bold"), bg=colors["primarycolor"], fg=colors["darkmode"], width=20)
+#     # spacer.pack()
+#     timelabel = Label(sidebar, text=f"{time_text}\n____________________", font=("Roboto", 20, "bold"), bg=colors["primarycolor"], fg=colors["boxcolor"], width=20)
+#     timelabel.pack()
+#     weatherlabel = Label(sidebar, text=f"{weather_text}\n____________________", font=("Roboto", 20, "bold"), bg=colors["primarycolor"], fg=colors["boxcolor"], width=20)
+#     weatherlabel.pack()
+#     weekdaylabel = Label(sidebar, text=f"{weekday_text}\n____________________", font=("Roboto", 20, "bold"), bg=colors["primarycolor"], fg=colors["boxcolor"], width=20)
+#     weekdaylabel.pack()
 
-    t_remove_btn = Image.open("media/removeitembutton.png")
-    t_remove_btn = t_remove_btn.resize((100, 50), Image.BILINEAR)
-    t_formatted_remove_btn = ImageTk.PhotoImage(t_remove_btn)
-    t_removeitembutton = Button(t_buttonsbar, image=t_formatted_remove_btn, command=goto_remove_task, width=100, height=50, border=0)
-    t_removeitembutton.pack(side=LEFT)
 
-    t_label = Label(root, text="Tasks to do", font=("Roboto", 28), bg=colors["background"], fg=colors["headings"])
-    t_label.pack()
 
-    t_listbox.pack()
 
-    # display_in_real_time(timelabel)
+#     quoteoftheday = Label(root, text=f"{quotes.getDailyQuote()}", font=("Roboto", 12, "bold"), bg=colors["quotebackground"], fg=colors["quoteforeground"], borderwidth=2, relief="solid")
+#     quoteoftheday.place(x=700, y=100)
 
-    # default window size
-    root.geometry("1536x900")
-    root.mainloop()
 
-# def resize_image(event):
-#     new_width = event.width
-#     new_height = event.height
-#     bannerimage = copiedimage.resize((new_width, new_height))
-#     photo = ImageTk.PhotoImage(image)
-#     label.configure(image = photo)
-#     label.image = photo
+#     root.title('Notes GUI')
+#     root.iconbitmap('media/icon2.ico')
+#     root.configure(background=colors["background"])
 
-# buttons dont work, needs fixed
-# idea: dont provide listbox as argument, simply have add_task and add_project as separate button commands for each respective list
+#     p_label = Label(root, text="Projects to do", font=("Roboto", 28), bg=colors["background"], fg=colors["headings"])
+#     p_label.pack()
 
-def gui_add_task():
-    print("add button clicked")
-    lists.add_task("dummy task")
-    update_listboxes_data()
-    
-def gui_remove_task():
-    print("remove button clicked")
-    try:
-        task_index = t_listbox.curselection()[0] 
-        t_listbox.delete(task_index)
-        lists.remove_task(t_id_array[task_index])
-        update_listboxes_data()
-    except IndexError:
-        print("index error wtf")
-
-def gui_check_task():
-    print("check button clicked")
-    try:
-        task_index = t_listbox.curselection()[0]
-        print(t_id_array[task_index])
-        lists.check_uncheck_task(t_id_array[task_index])
-        update_listboxes_data()
-    except IndexError:
-        print("index error wtf")
-
-def gui_add_project():
-    print("add button clicked")
-    projects.add_project("dummy project")
-    update_listboxes_data()
-
-def gui_remove_project():
-    try:
-        project_index = p_listbox.curselection()[0] 
-        p_listbox.delete(project_index)
-        projects.remove_project(p_id_array[project_index])
-        update_listboxes_data()
-    except IndexError:
-        print("index error wtf")
-
-def gui_check_project():
-    try:
-        project_index = p_listbox.curselection()[0]
-        projects.check_uncheck_project(p_id_array[project_index])
-        update_listboxes_data()
-    except IndexError:
-        print("index error wtf")
-
-def display_in_real_time(label):
-    label.config(text=weather.getLocalTime())
-    # label.after(1000,display_in_real_time(label))
-    # time.sleep(1)
+def gui_main():
+    label = Label(root, font="consolas 18", background="black", foreground="cyan")
+    label.pack(anchor='center')
+    time(label)
+    window0 = TemplateWindow(root, "Notion Clone -- f to fullscreen, ctrl-q to quit", "1200x950")
+    # window1 = TemplateWindow(root, "Notion Clone", "1080x720")
 
 
 if __name__ == "__main__":
-    gui_taskview_window()
+    gui_main()

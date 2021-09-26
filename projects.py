@@ -1,22 +1,28 @@
-# for loading/saving data to files.
+# for importing legacy data format
 import pickle
-# import our parent classes
-from lists import *
-# from lists import Task, Todo
-from weather import current_time
 
-from formats import u_checkbox_empty, u_checkbox_full
+import sqlite3
+import random
 
-# putting our "monthly projects" task category as a subclass of "todo" in a separate file
+import colorama
+from colorama import Fore, Back, Style
+colorama.init(autoreset=True)
 
-# todo
-#
-# we need to make sure the deadline that is inputted is acceptable
-#   - should also be doing with other initializations of objects that use variables have right types and format
+# task_categories = ["gamedev", "coding", "chores", "homework", "books", "podcasts",
+#     "compsci", "games", "purchases", "productivity", "data_analysis","gameengine",
+#     "projects"]
 
+category_and_file = {
+    "gamedev":"gamedev_projects.pickle",
+    "books":"programming_books.pickle",
+    "gameengine":"termina_game_engine.pickle",
+    "courses":"coding_courses.pickle",
+    "coding":"js_python_projects.pickle"
+}
 
-# note: we inherit from Task and import from lists, but I do not see any real need for this, its safer to keep it separate.
-class Project(Task):
+# ==OLD CODE FOR IMPORTING OLD DATA TO BE FORMATTED=================================================
+
+class Project():
     def __init__(self, name, deadline, checked=0):
         self.name = name
         self.deadline = deadline
@@ -30,19 +36,9 @@ class Project(Task):
             return u_checkbox_empty
         else:
             return u_checkbox_full
-
-# alongside our projects having deadlines, we
-#  need to have desktop push notifications and google calendar scheduling that updates
-# automatically for us. This is what makes a "Project" different from standard "Todo" or "Habit"
-
-# Habit: similar to Project in that it is scheduled, and Todo in that it has checkboxes,
-# but recurrs daily, has daily notification, and has multiple checkboxes (depending on the need)
-
-# Will also implement Habits in a separate file with similar functionality
-
-# todo:
-#
-# scheduling and calendar
+        
+    def __str__(self):
+        return f"projects.Project object | {self.name}, {self.deadline}, {self.checked}, end of string"
 
 class ProjectList():
     def __init__(self, name="default_projects_list_object"):
@@ -54,9 +50,9 @@ class ProjectList():
         leave outputfile alone for default settings
         """
         if outputfile == '':
-            outputfile = f'data/{self.name}.pickle'
+            outputfile = f'old/{self.name}.pickle'
         else:
-            outputfile = "data/" + outputfile + ".pickle"
+            outputfile = "old/" + outputfile + ".pickle"
         # save array data
         print("save function in projects, ", self.name, " to ", outputfile)
         filestorage = open(outputfile, "wb")
@@ -69,8 +65,6 @@ class ProjectList():
         """
         if inputfile == '':
             inputfile = f'data/{self.name}.pickle'
-        else:
-            inputfile = "data/" + inputfile + ".pickle"
         # load array data
         try:
             print("load function in projects, ", self.name, " from ", inputfile)
@@ -80,107 +74,212 @@ class ProjectList():
         except:
             self.save_data()
         # make sure to add this try-except statement, and to close the handler when done loading/saving.
-        
+
+
+
+# ======================================================
+
+### NEW CODE
+
+def create_table():
+    conn = sqlite3.connect('projects.db')
+    c = conn.cursor()
+    # create a table
+    c.execute("""CREATE TABLE projects (
+        project_name TEXT,
+        deadline TEXT,
+        category TEXT,
+        completed INTEGER,
+        difficulty INTEGER,
+        important INTEGER,
+        urgent INTEGER,
+        passionate INTEGER,
+        project_id INTEGER
+    )""")    
+
+    # Have to commit our command
+    conn.commit()
+
+    # Close our connection (best practice)
+    conn.close()
+
+def push_project(name, deadline, category, completed, difficulty, important, urgent, passionate):
+    project_id=random.randint(1,100000)
+    conn = sqlite3.connect('projects.db')
+    c = conn.cursor()
+    c.execute("INSERT INTO projects VALUES (?,?,?,?,?,?,?,?,?)", (name, deadline, category, completed, difficulty, important, urgent, passionate, project_id))
+    conn.commit()
+    conn.close()
+
+def show_all_projects():
+    conn = sqlite3.connect('projects.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM projects")
+    projects = c.fetchall() # returns array of project items (tuple objects)
     
-    def push_project(self, project, deadline=f"{current_time.tm_mon}/30/{current_time.tm_year}"):
-        self.projectlist.append(Project(project, deadline))
+    print(f"{Fore.BLACK}{Back.GREEN}PROJECT\t\t\t\tDEADLINE\tCOMPLETED\tCATEGORY\tID")
+    for project in projects:
+        if len(project[0]) <= 20:
+            print(f'{Fore.GREEN}"{project[0]}"\t\t{project[1]}\t\t{project[3]}\t{project[2]}\t\t{project[8]}\t\timportant:{project[5]}\t\turgent:{project[6]}\t\tpassionate:{project[7]}\t\t')
+        else:
+            print(f'{Fore.GREEN}"{project[0]}"\t{project[1]}\t\t{project[3]}\t{project[2]}\t\t{project[8]}\t\timportant:{project[5]}\t\turgent:{project[6]}\t\tpassionate:{project[7]}\t\t')
 
 
-    def check_project(self, project_id):
-        for project in self.projectlist:
-            if str(project.project_id) == str(project_id):
-                if project.checked == 0:
-                    project.checked = 1
-                elif project.checked == 1:
-                    project.checked = 0
+    conn.commit()
+    conn.close()
 
-    def change_deadline(self, project_id, deadline):
-        for project in self.projectlist:
-            if str(project.project_id) == str(project_id):
-                project.deadline = deadline
+def show_projects(category):
+    conn = sqlite3.connect('projects.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM projects WHERE category like (?)", [category])
+    projects = c.fetchall() # returns array of project items (tuple objects)
+    
+    print(f"{Fore.BLACK}{Back.GREEN}PROJECT\t\t\t\tDEADLINE\tCOMPLETED\tCATEGORY\tID")
+    for project in projects:
+        if len(project[0]) <= 12:
+            print(f'{Fore.GREEN}"{project[0]}"\t\t\t{project[1]}\t\t{project[3]}\t{project[2]}\t\t{project[8]}\t\timportant:{project[5]}\t\turgent:{project[6]}\t\tpassionate:{project[7]}\t\t')
+        elif len(project[0]) <= 20:
+            print(f'{Fore.GREEN}"{project[0]}"\t\t{project[1]}\t\t{project[3]}\t{project[2]}\t\t{project[8]}\t\timportant:{project[5]}\t\turgent:{project[6]}\t\tpassionate:{project[7]}\t\t')
+        else:
+            print(f'{Fore.GREEN}"{project[0]}"\t\t{project[1]}\t\t{project[3]}\t{project[2]}\t\t{project[8]}\t\timportant:{project[5]}\t\turgent:{project[6]}\t\tpassionate:{project[7]}\t\t')
 
-    def remove_project(self, project_id):
-        # del self.todolist[task]
-        for project in self.projectlist:
-            if str(project.project_id) == str(project_id):
-                self.projectlist.remove(project)
+            # if len(project.name) <= 14:
+            #     print(f'{Fore.GREEN}"{project.name}"\t\t\t{project.deadline}\t\t{project.needsCompleted()}\t\t{project.project_id}')
+            # elif len(project.name) <= 20:
+            #     print(f'{Fore.GREEN}"{project.name}"\t\t{project.deadline}\t\t{project.needsCompleted()}\t\t{project.project_id}')
+            # elif len(project.name) <= 24:
+            #     print(f'{Fore.GREEN}"{project.name}"\t{project.deadline}\t\t{project.needsCompleted()}\t\t{project.project_id}')
+            # elif len(project.name) <= 50:
+            #     print(f'{Fore.GREEN}"{project.name}"\n\t\t\t\t{project.deadline}\t\t{project.needsCompleted()}\t\t{project.project_id}')
 
-    def remove_all(self):
-        self.projectlist = []
+    conn.commit()
+    conn.close()
 
-    def show(self):
-        # print(f'\ndisplaying tasks from list "{self.name}"')
-        print(f"{Fore.BLACK}{Back.GREEN}PROJECT\t\t\t\tDEADLINE\tCOMPLETED\t\tID")
-        for project in self.projectlist:
-            if len(project.name) <= 14:
-                print(f'{Fore.GREEN}"{project.name}"\t\t\t{project.deadline}\t\t{project.needsCompleted()}\t\t{project.project_id}')
-            elif len(project.name) <= 20:
-                print(f'{Fore.GREEN}"{project.name}"\t\t{project.deadline}\t\t{project.needsCompleted()}\t\t{project.project_id}')
-            elif len(project.name) <= 24:
-                print(f'{Fore.GREEN}"{project.name}"\t{project.deadline}\t\t{project.needsCompleted()}\t\t{project.project_id}')
-            elif len(project.name) <= 50:
-                print(f'{Fore.GREEN}"{project.name}"\n\t\t\t\t{project.deadline}\t\t{project.needsCompleted()}\t\t{project.project_id}')
+def remove_all_projects():
+    conn = sqlite3.connect('projects.db')
+    c = conn.cursor()
+    c.execute("DELETE from projects")
+    projects = c.fetchall()
+    conn.commit()
+    conn.close()
+
+def remove_project(name, id='optional'):
+    conn = sqlite3.connect('projects.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM projects WHERE project_name = (?)", [name])
+    yesorno = input(f"Are you sure you want to delete project? [yes or no]: {c.fetchall()}")
+    if "yes" in yesorno:
+        c.execute("DELETE from projects WHERE project_name = (?)", [name])
+    conn.commit()
+    conn.close()
+
+
+def get_all_projects():
+    conn = sqlite3.connect('projects.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM projects")
+    projects = c.fetchall()
+    conn.commit()
+    conn.close()
+    return projects
+
+def get_projects(category):
+    conn = sqlite3.connect('projects.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM projects WHERE category = (?)", [category])
+    projects = c.fetchall()
+    conn.commit()
+    conn.close()
+    return projects
+
+def get_project(name, id='optional'):
+    conn = sqlite3.connect('projects.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM projects WHERE project_name LIKE (?)", [name])
+    project = c.fetchall()
+    conn.commit()
+    conn.close()
+    return project
+
+
+def check_project(name):
+    conn = sqlite3.connect('projects.db')
+    c = conn.cursor()
+    c.execute("""
+    UPDATE projects SET completed = 1
+    WHERE project_name = (?)""", [name])
+    conn.commit()
+    conn.close()
+
+def mark_project_important(name):
+    conn = sqlite3.connect('projects.db')
+    c = conn.cursor()
+    c.execute("""
+    UPDATE projects SET important = 1
+    WHERE project_name LIKE (?)""", [name])
+    conn.commit()
+    conn.close()
+
+def mark_project_urgent(name):
+    conn = sqlite3.connect('projects.db')
+    c = conn.cursor()
+    c.execute("""
+    UPDATE projects SET urgent = 1
+    WHERE project_name LIKE (?)""", [name])
+    conn.commit()
+    conn.close()
+
+def mark_project_as_passion_project(name):
+    conn = sqlite3.connect('projects.db')
+    c = conn.cursor()
+    c.execute("""
+    UPDATE projects SET passionate = 1
+    WHERE project_name LIKE (?)""", [name])
+    conn.commit()
+    conn.close()
+
+def import_legacy_projects_data():
+    for category in category_and_file:
+        print(f"category: {category}\t\tassociated file: {category_and_file[category]}")
             
+        inputfile = f'old/{category_and_file[category]}'
+        
+        oldlist = ProjectList()
+        oldlist.load_data(inputfile)
+        for project in oldlist.projectlist:
+            # print(project.name, "  within category: ", category)
+            push_project(project.name, "12/30/2021", category, 0, 2, 0, 0, 0,)
+            # print(project)
 
 
-def show_projects():
-    projects = ProjectList()
-    projects.load_data()
-    projects.show()
+# create_table()
 
-def add_project(project_name):
-    projects = ProjectList()
-    projects.load_data()
-    projects.push_project(project_name)
-    projects.save_data()
+# import_legacy_projects_data()
 
-def remove_project(project_id):
-    projects = ProjectList()
-    projects.load_data()
-    projects.remove_project(project_id)
-    projects.save_data()
+print(get_all_projects())
+# show_all_projects()
+# mark_project_important("megaman style platformer")
+# mark_project_as_passion_project("megaman style platformer")
 
-def remove_all():
-    projects = ProjectList()
-    projects.load_data()
-    projects.remove_all()
-    projects.save_data()
+# print(get_project("megaman style platformer"))
 
-def check_uncheck_project(project_id):
-    projects = ProjectList()
-    projects.load_data()
-    projects.check_project(project_id)
-    projects.save_data()
+# show_projects("gamedev")
 
-def change_project_deadline(project_id, deadline):
-    projects = ProjectList()
-    projects.load_data()
-    projects.change_deadline(project_id, deadline)
-    projects.save_data()
+# show_projects('books')
 
-def save_projects_data(outputfile="projectslist_backup"):
-    projects = ProjectList()
-    projects.load_data()
-    projects.save_data(outputfile)
+# remove_all_projects()
+# push_project('task manager app','9/30/2021','coding',0,2,1,1,1)
+# push_project('modular GUI tkinter','9/30/2021','coding',0,2,1,1,1)
+# push_project('code sudoku game + solver','9/30/2021','gamedev',0,2,1,1,1)
+# push_project('castlevania clone','9/30/2021','gamedev',0,2,1,1,1)
 
-def load_projects_data(inputfile="projectslist_backup"):
-    projects = ProjectList()
-    projects.load_data(inputfile)
-    projects.save_data() # note that we do not provide a parameter. This means that our backup is saved to the current "cache".
+# # show_all_projects()
+# # print(get_projects('coding'))
+# print(get_project("castlevania clone"))
 
-# for accessing from GUI modules
-def get_projects_data():
-    projects = ProjectList()
-    projects.load_data()
-    return projects.projectlist
+# check_project("castlevania clone")
 
-def get_projects_ids():
-    projects = ProjectList()
-    projects.load_data()
-    id_array = []
-    for project in projects.projectlist:
-        id_array.append(project.project_id)
-    return id_array
 
-if __name__ == "__main__":
-    show_projects()
+# show_projects('gamedev')
+
+# show_projects('coding')

@@ -9,9 +9,7 @@ import quotes
 # for getting local time
 import time
 # for all things related to todo lists or projects
-import lists, projects
-from lists import Task # important so that our "push_task" method works when called from main.py (Task class is not in main.py's scope/namespace)
-from projects import Project # important so that our "push_project" method works when called from main.py (Task class is not in main.py's scope/namespace)
+import tasks, projects
 # for deep-copying data / sequence objects
 from copy import deepcopy
 # for colored text in terminal
@@ -69,11 +67,10 @@ def output_quote():
 
 def output_todo():
     print(todolist_label)
-    a = Process(lists.show_todolist())
 
 def output_projects():
     print(monthlyprojects_label)
-    b = Process(projects.show_projects())
+    projects.show_all_projects()
 
 def output_habits():
     pass
@@ -113,13 +110,13 @@ def main(argv):
                         for argument in argv[3:]:
                             if type(argument) is str:
                                 print(f"adding {argument} to todo list.")
-                                lists.add_task(argument)
+                                tasks.push_task(argument, "today", "etc", 0, 1, 1, 0, 0)
                     elif argv[2] in "projects":
                         print(f"{argv[3:]}")
                         for argument in argv[3:]:
                             if type(argument) is str:
                                 print(f"adding {argument} to projects list.")
-                                projects.add_project(argument)
+                                projects.push_project(argument, "11/30/2021", "etc", 0, 2, 1, 0, 0)
                     elif argv[2] in "habits":
                         print(f"adding {argv[3]} to habit tracker.")
                     else:
@@ -134,7 +131,7 @@ def main(argv):
                     for argument in argv[2:]:
                         if type(int(argument)) is int:
                             print(f"checking off {argument} in todo list.")
-                            lists.check_uncheck_task(argument)
+                            tasks.check_task(argument)
                 if argv[1] in "projects":
                     # print(f"checking off item in projects list with ID {argv[2]}")
                     # projects.check_uncheck_project(argv[2])
@@ -142,13 +139,13 @@ def main(argv):
                     for argument in argv[2:]:
                         if type(int(argument)) is int:
                             print(f"checking off {argument} in projects list.")
-                            projects.check_uncheck_project(argument)
+                            projects.check_project(argument)
                 if argv[1] in "habits":
                     print(f"checking off item in habit tracker with ID {argv[2]}")
                 else:
-                    print("SYNTAX:  check [ todo | projects | habits ]  [ itemID ]")
+                    print("SYNTAX:  check [ todo | projects | habits ]  [ name ]")
             else:
-                print("SYNTAX:  check [ todo | projects | habits ]  [ itemID ]")
+                print("SYNTAX:  check [ todo | projects | habits ]  [ name ]")
 
 
         elif argv[0] == "remove":
@@ -157,17 +154,17 @@ def main(argv):
                     if argv[2] in "todo":
                         print(f"removing {argv[3]} from todo list.")
                         if argv[3] == "all":
-                            lists.remove_all()
+                            tasks.remove_all_tasks()
                         else:
                             print(f"{argv[3:]}")
                             for argument in argv[3:]:
                                 if type(int(argument)) is int:
                                     print(f"removing {argument} from todo list.")
-                                    lists.remove_task(argument)
+                                    tasks.remove_task(argument)
                     elif argv[2] in "projects":
                         print(f"removing {argv[3]} from projects list.")
                         if argv[3] == "all":
-                            projects.remove_all()
+                            projects.remove_all_projects()
                         else:
                             print(f"{argv[3:]}")
                             for argument in argv[3:]:
@@ -177,47 +174,9 @@ def main(argv):
                     elif argv[2] in "habits":
                         print(f"removing {argv[3]} from habit tracker.")
                     else:
-                        print("\n* ERROR: invalid input.\n* SYNTAX:  remove from [ todo | projects | habits ]  [ itemID ]\n\t * itemID is listed by show commandm, can include multiple arguments")
-            print("\n* SYNTAX:  remove from [ todo | projects | habits ]  [ itemID ]\n\t * itemID is listed by show command, can include multiple arguments")
-        
-        elif argv[0] == "save":
-            if len(argv) >= 2:
-                if argv[1] in "todo":
-                    if len(argv) >= 3:
-                        lists.save_todolist_data(argv[2])
-                    else:
-                        lists.save_todolist_data()
-                elif argv[1] in "projects":
-                    if len(argv) >= 3:
-                        projects.save_projects_data(argv[2])
-                    else:
-                        projects.save_projects_data()
-                elif argv[1] in "habits":
-                    pass
-                else:
-                    print("\n* SYNTAX:\n  save   [ todo | projects | habits ]  [ output-file-name (optional) ]")
-            else:
-                print("\n* SYNTAX:\n  save   [ todo | projects | habits ]  [ output-file-name (optional) ]")
-        
-        elif argv[0] == "load":
-            if len(argv) >= 2:
-                if argv[1] in "todo":
-                    if len(argv) >= 3:
-                        lists.load_todolist_data(argv[2])
-                    else:
-                        lists.load_todolist_data()
-                elif argv[1] in "projects":
-                    if len(argv) >= 3:
-                        projects.load_projects_data(argv[2])
-                    else:
-                        projects.load_projects_data()
-                elif argv[1] in "habits":
-                    pass
-                else:
-                    print("\n* SYNTAX:\n  load   [ todo | projects | habits ]  [ input-file-name (optional) ]")
-            else:
-                print("\n* SYNTAX:\n  load   [ todo | projects | habits ]  [ input-file-name (optional) ]")
-        
+                        print("\n* ERROR: invalid input.\n* SYNTAX:  remove from [ todo | projects | habits ]  [ name ]\n\t * itemID is listed by show commandm, can include multiple arguments")
+            print("\n* SYNTAX:  remove from [ todo | projects | habits ]  [ name ]\n\t * itemID is listed by show command, can include multiple arguments")
+                
         elif argv[0] == "mynameis":
             if len(argv) >= 2:
                 username = argv[1]
@@ -227,8 +186,12 @@ def main(argv):
             else:
                 print("please tell me your name :-)")
         
-        elif argv[0] == "gui":
-            GUI.gui_taskview_window()
+        elif argv[0].lower() == "gui":
+            if len(argv) == 1:
+                GUI.gui_main()
+            elif len(argv) >= 2:
+                GUI.set_projects_category(argv[1])
+                GUI.gui_main()
 
         elif argv[0] == "deadlines":
             tempidarray = projects.get_projects_ids()

@@ -6,6 +6,13 @@ Notion-like app with terminal commands input, designed towards daily productivit
 
 * *first working prototype, including GUI made in 22 Hours*
 
+# Added in recent update:
+* fullscreen, hotkey commands
+* new backgrounds
+* now using SQL database
+* GUI now has mulitple tabs/viewports to switch between
+* cleaned up interface
+
 # Why is it?
 * I find it irritable to use Notion's GUI to manually input things, rather than using a library/module and terminal commands that I can interface with more efficiently, via CLI or scripting. 
 * I'd like to customize my GUI to personal preference, i.e. different themes, widgets, trackers.
